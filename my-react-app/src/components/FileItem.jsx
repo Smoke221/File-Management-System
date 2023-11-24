@@ -19,9 +19,41 @@ const FileItem = ({ file, props }) => {
         props.setUpdate(!props.update);
       }, 2000);
     } catch (error) {
-      console.error('Error deleting file:', error.response ? error.response.data : error.message);
+      console.error(
+        "Error deleting file:",
+        error.response ? error.response.data : error.message
+      );
       // Handle the error and display a user-friendly message
-      setNotification('Deletion failed: File not found');
+      setNotification("Deletion failed: File not found");
+      setTimeout(() => {
+        setNotification(null);
+      }, 2000);
+    }
+  };
+
+  const handleDownload = async (file) => {
+    try {
+      // Create a temporary anchor element
+      const link = document.createElement("a");
+    
+      link.href = file.fileUrl;
+      link.download = file.filename;
+      
+      setNotification("Downloading...");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      setNotification("File Downloaded successfully.");
+      setTimeout(() => {
+        setNotification(null);
+      }, 2000);
+    } catch (error) {
+      console.error(
+        "Error downloading file:",
+        error.response ? error.response.data : error.message
+      );
+      setNotification("Download failed: File not found");
       setTimeout(() => {
         setNotification(null);
       }, 2000);
@@ -33,6 +65,9 @@ const FileItem = ({ file, props }) => {
       <span>{file.filename}</span>
       <img src={file.fileUrl} alt="" className="file-image" />
       <p>{file.size}</p>
+      <button className="dwnld-btn" onClick={() => handleDownload(file)}>
+        Download
+      </button>
       <button className="dlt-btn" onClick={() => handleDelete(file)}>
         Delete
       </button>

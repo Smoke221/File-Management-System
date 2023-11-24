@@ -44,7 +44,7 @@ button:hover {
   flex-wrap: wrap;
 }
 .notification {
-  background-color: #4caf50;
+  background-color: #1088a6;
   color: #fff;
   padding: 15px;
   margin-top: 10px;
@@ -52,4 +52,22 @@ button:hover {
   text-align: center;
   font-weight: bold;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.dwnld-btn {
+  background-color: #26b23e;
+  color: #fff;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.dwnld-btn:hover {
+  background-color: #19902d;
+}
+
+.dwnld-icon {
+  margin-right: 5px;
 }
