@@ -19,8 +19,8 @@
     "file-type": "^16.5.4",
     "mongoose": "^8.0.1",
     "mysql": "^2.18.1",
-    "mysql2": "^3.6.5",
     "nodemon": "^3.0.1",
-    "sequelize": "^6.35.1"
+    "serverless": "^3.38.0",
+    "serverless-http": "^3.2.0"
   }
 }

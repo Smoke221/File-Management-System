@@ -1,0 +1,17 @@
+service: File-Management-System
+frameworkVersion: "3"
+provider:
+  name: aws
+  runtime: nodejs18.x
+  stage: deploy
+  region: ap-south-1
+  environment:
+    MY_VARIABLE: value1
+
+functions:
+  hello:
+    handler: handler.hello
+    events:
+      - http: ANY /{proxy+}
+      - http: ANY /
+configValidationMode: error

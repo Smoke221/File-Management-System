@@ -3,16 +3,15 @@ const fileUpload = require("express-fileupload");
 const AWS = require("aws-sdk");
 const { fileModel } = require("../models/fileModel");
 
-require("dotenv").config();
 
 const fileRouter = express.Router();
 
-// Configure AWS SDK with your credentials
-AWS.config.update({
-  accessKeyId: process.env.accessKey,
-  secretAccessKey: process.env.secretAcessKey,
-  region: "us-east-1",
-});
+// // Configure AWS SDK with your credentials
+// AWS.config.update({
+//   accessKeyId: process.env.accessKey,
+//   secretAccessKey: process.env.secretAcessKey,
+//   region: "us-east-1",
+// });
 
 // Create an S3 instance
 const s3 = new AWS.S3();
@@ -31,7 +30,7 @@ fileRouter.post("/upload", async (req, res) => {
 
     // Create a params object for S3 upload
     const params = {
-      Bucket: process.env.BucketName,
+      Bucket: "finkraftassignment",
       Key: uploadedFile.name,
       Body: uploadedFile.data,
     };
@@ -59,7 +58,7 @@ fileRouter.post("/upload", async (req, res) => {
 fileRouter.get("/files", async (req, res) => {
   try {
     const s3Params = {
-      Bucket: process.env.BucketName,
+      Bucket: "finkraftassignment",
     };
 
     const s3Response = await s3.listObjectsV2(s3Params).promise();
@@ -97,7 +96,7 @@ fileRouter.delete("/delete/:filename", async (req, res) => {
     // Delete the file from S3 as well
     if (s3) {
       const params = {
-        Bucket: process.env.BucketName,
+        Bucket: "finkraftassignment",
         Key: filename,
       };
 
