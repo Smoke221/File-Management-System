@@ -5,12 +5,10 @@ provider:
   runtime: nodejs18.x
   stage: deploy
   region: ap-south-1
-  environment:
-    MY_VARIABLE: value1
 
 functions:
-  hello:
-    handler: handler.hello
+  file:
+    handler: handler.file
     events:
       - http: ANY /{proxy+}
       - http: ANY /

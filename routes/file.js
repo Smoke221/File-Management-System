@@ -1,8 +1,7 @@
 const express = require("express");
 const fileUpload = require("express-fileupload");
 const AWS = require("aws-sdk");
-const { fileModel } = require("../models/fileModel");
-
+const { db } = require("../configs/db");
 
 const fileRouter = express.Router();
 
@@ -25,53 +24,68 @@ fileRouter.post("/upload", async (req, res) => {
     if (!req.files || Object.keys(req.files).length === 0) {
       return res.status(400).json({ message: "No files were uploaded." });
     }
-
+    console.log("s3UploadResponse.Location");
     const uploadedFile = req.files.uploadedFile;
+    // console.log(uploadedFile);
 
-    // Create a params object for S3 upload
+    // Upload the file to S3
     const params = {
       Bucket: "finkraftassignment",
       Key: uploadedFile.name,
       Body: uploadedFile.data,
     };
 
-    // Upload the file to S3
     const s3UploadResponse = await s3.upload(params).promise();
 
-    // Create a MongoDB document with file metadata
-    const file = new fileModel({
-      filename: uploadedFile.name,
-      fileUrl: s3UploadResponse.Location,
+    // Ensure that s3UploadResponse.Location is defined
+    if (!s3UploadResponse.Location) {
+      return res
+        .status(500)
+        .json({ message: "Internal Server Error. S3 Location is undefined." });
+    }
+
+    // Insert file metadata into RDS using the existing connection
+    const sql = "INSERT INTO files (filename, file_url) VALUES (?, ?)";
+    const values = [uploadedFile.name, s3UploadResponse.Location];
+
+    db.query(sql, values, (err, result) => {
+      if (err) {
+        console.error(err);
+        res.status(500).json({ message: "DB Error: Internal Server Error." });
+        return;
+      }
+
+      console.log("File uploaded successfully.");
+      res.status(200).json({ message: "File uploaded successfully." });
     });
-
-    // Save the file metadata to MongoDB
-    await file.save();
-
-    res.status(200).json({ message: "File uploaded successfully." });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Internal Server Error." });
+    res.status(500).json({ message: "Catch Error: Internal Server Error." });
   }
 });
 
-// Route to retrieve information about files from S3
+// Route to retrieve information about files from RDS
 fileRouter.get("/files", async (req, res) => {
   try {
-    const s3Params = {
-      Bucket: "finkraftassignment",
-    };
+    // Query file information from RDS
+    const sql = "SELECT * FROM files";
+    db.query(sql, (err, result) => {
+      if (err) {
+        console.error(err);
+        res.status(500).json({ message: "Internal Server Error." });
+        return;
+      }
 
-    const s3Response = await s3.listObjectsV2(s3Params).promise();
+      // Extract relevant information for the response
+      const fileData = result.map((file) => ({
+        filename: file.filename,
+        fileUrl: file.file_url,
+        // lastModified: file.last_modified,
+        // size: file.size / 1024 + "KB", // Adjust this based on your RDS schema
+      }));
 
-    // Extract relevant information for the response
-    const fileData = s3Response.Contents.map((file) => ({
-      filename: file.Key,
-      fileUrl: `https://${s3Params.Bucket}.s3.ap-south-1.amazonaws.com/${file.Key}`,
-      lastModified: file.LastModified,
-      size: (file.Size/1024)+"KB",
-    }));
-
-    res.status(200).json(fileData);
+      res.status(200).json(fileData);
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal Server Error." });
@@ -84,24 +98,18 @@ fileRouter.delete("/delete/:filename", async (req, res) => {
 
   try {
     // Find the file in the database
-    const file = await fileModel.findOne({ filename });
+    const sqlSelect = "SELECT * FROM files WHERE filename = ?";
+    const rows = db.query(sqlSelect, [filename]);
 
-    if (!file) {
+    if (rows.length === 0) {
       return res.status(404).json({ message: "File not found." });
     }
 
     // Delete the file from the database
-    await fileModel.deleteOne({ filename });
+    const sqlDelete = "DELETE FROM files WHERE filename = ?";
+    await db.query(sqlDelete, [filename]);
 
-    // Delete the file from S3 as well
-    if (s3) {
-      const params = {
-        Bucket: "finkraftassignment",
-        Key: filename,
-      };
-
-      await s3.deleteObject(params).promise();
-    }
+    // You may also want to delete the file from S3 here if needed
 
     res.status(200).json({ message: "File deleted successfully." });
   } catch (error) {
